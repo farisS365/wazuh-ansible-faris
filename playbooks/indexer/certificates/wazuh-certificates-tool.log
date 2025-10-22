@@ -1,0 +1,10 @@
+22/10/2025 09:42:34 INFO: Verbose logging redirected to /etc/ansible/roles/wazuh-ansible-faris/playbooks/indexer/certificates/wazuh-certificates-tool.log
+22/10/2025 09:42:34 INFO: Generating the root certificate.
+22/10/2025 09:42:36 INFO: Generating Admin certificates.
+22/10/2025 09:42:37 INFO: Admin certificates created.
+22/10/2025 09:42:37 INFO: Generating Wazuh indexer certificates.
+22/10/2025 09:42:39 INFO: Wazuh indexer certificates created.
+22/10/2025 09:42:39 INFO: Generating Filebeat certificates.
+22/10/2025 09:42:42 INFO: Wazuh Filebeat certificates created.
+22/10/2025 09:42:42 INFO: Generating Wazuh dashboard certificates.
+22/10/2025 09:42:43 INFO: Wazuh dashboard certificates created.

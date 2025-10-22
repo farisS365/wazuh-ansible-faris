@@ -3,8 +3,8 @@
   yum_repository:
     name: wazuh_repo
     description: Wazuh repository
-    baseurl: "{{ wazuh_manager_config.repo.yum }}5/"
-    gpgkey: "{{ wazuh_manager_config.repo.gpg }}-5"
+    baseurl: "{{ wazuh_manager_config.repo.yum }}4/"
+    gpgkey: "{{ wazuh_manager_config.repo.gpg }}-4"
     gpgcheck: true
   changed_when: false
   when:

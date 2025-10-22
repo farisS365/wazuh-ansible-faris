@@ -1,0 +1,135 @@
+---
+# =====================================================
+# Wazuh Indexer Cluster
+# =====================================================
+# IMPORTANT NODE NAMES MUST CHANGE ACCORDINGLY
+- hosts: wi_cluster
+  strategy: free
+  become: yes
+  become_user: root
+  roles:
+    - role: ../roles/wazuh/wazuh-indexer
+      indexer_network_host: "{{ private_ip }}"
+  vars:
+    indexer_cluster_nodes:
+      - "{{ hostvars.wi1.private_ip }}"
+      - "{{ hostvars.wi2.private_ip }}"
+      - "{{ hostvars.wi3.private_ip }}"
+
+    indexer_discovery_nodes:
+      - "{{ hostvars.wi1.private_ip }}"
+      - "{{ hostvars.wi2.private_ip }}"
+      - "{{ hostvars.wi3.private_ip }}"
+
+    indexer_node_master: true
+    indexer_admin_password: changeme
+    indexer_custom_user: ""
+    indexer_version: "4.12.0" # Change version
+    indexer_node_name: "indexer-{{ hostvars[inventory_hostname].node_id }}" # the front of the node name must be changed if you are using different name
+
+    wazuh_certificates:
+      ca: "root-ca.pem"
+      cert: "indexer-{{ hostvars[inventory_hostname].node_id }}.pem" # the front of the node name must be changed if you are using different name
+      key: "indexer-{{ hostvars[inventory_hostname].node_id }}-key.pem" # the front of the node name must be changed if you are using different name
+
+    instances:
+      wazuh-indexer-1:
+        name: indexer-1
+        ip: "{{ hostvars.wi1.private_ip }}"
+        role: indexer
+
+      wazuh-indexer-2:
+        name: indexer-2
+        ip: "{{ hostvars.wi2.private_ip }}"
+        role: indexer
+
+      wazuh-indexer-3:
+        name: indexer-3
+        ip: "{{ hostvars.wi3.private_ip }}"
+        role: indexer
+
+      wazuh-server-1:
+        name: server-1
+        ip: "{{ hostvars.wi1.private_ip }}"
+        role: wazuh
+        node_type: master
+
+      wazuh-server-2:
+        name: server-2
+        ip: "{{ hostvars.wi2.private_ip }}"
+        role: wazuh
+        node_type: worker
+
+      wazuh-server-3:
+        name: server-3
+        ip: "{{ hostvars.wi3.private_ip }}"
+        role: wazuh
+        node_type: worker
+
+      wazuh-dashboard-1:
+        name: dashboard-1
+        ip: "{{ hostvars.wi1.private_ip }}"
+        role: dashboard
+
+
+# =====================================================
+# Wazuh Managers (Master + Workers)
+# =====================================================
+- hosts: manager
+  become: yes
+  become_user: root
+  roles:
+    - role: "../roles/wazuh/ansible-wazuh-manager"
+    - role: "../roles/wazuh/ansible-filebeat-oss"
+  vars:
+    filebeat_output_indexer_hosts:
+      - "{{ hostvars.wi1.private_ip }}"
+      - "{{ hostvars.wi2.private_ip }}"
+      - "{{ hostvars.wi3.private_ip }}"
+
+    filebeat_node_name: "server-{{ hostvars[inventory_hostname].node_id }}" # the front of the node name must be changed if you are using different name
+    wazuh_manager_version: 4.12.0 # Set the version 
+    wazuh_certificates:
+      ca: "root-ca.pem"
+      cert: "server-{{ hostvars[inventory_hostname].node_id }}.pem" # the front of the node name must be changed if you are using different name
+      key: "server-{{ hostvars[inventory_hostname].node_id }}-key.pem" # the front of the node name must be changed if you are using different name
+
+    wazuh_manager_config:
+      connection:
+        - type: secure
+          port: 1514
+          protocol: tcp
+          queue_size: 131072
+
+      api:
+        https: yes
+
+      cluster:
+        disable: "no"
+        node_name: "{{ 'server-1' if inventory_hostname == 'wi1' else 'server-' + hostvars[inventory_hostname].node_id | string }}" # the front of the node name must be changed if you are using different name
+        node_type: "{{ 'master' if inventory_hostname == 'wi1' else 'worker' }}"
+        key: c98b62a9b6169ac5f67dae55ae4a9088
+        nodes:
+          - "{{ hostvars.wi1.private_ip }}"
+          - "{{ hostvars.wi2.private_ip }}"
+          - "{{ hostvars.wi3.private_ip }}"
+
+
+# =====================================================
+# Wazuh Dashboard
+# =====================================================
+- hosts: dashboard
+  become: yes
+  become_user: root
+  roles:
+    - role: "../roles/wazuh/wazuh-dashboard"
+      tags: ['wazuh-dashboard']
+  vars:
+    dashboard_version: 4.12.0 # Set version
+    dashboard_node_name: dashboard-1 # Change node name accordingly
+    indexer_network_host: "{{ hostvars.wi1.private_ip }}"
+    indexer_cluster_nodes:
+      - "{{ hostvars.wi1.private_ip }}"
+      - "{{ hostvars.wi2.private_ip }}"
+      - "{{ hostvars.wi3.private_ip }}"
+    ansible_shell_allow_world_readable_temp: true

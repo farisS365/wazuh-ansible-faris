@@ -12,3 +12,4 @@ Pipfile.lock
 molecule/**/es_certs/
 molecule/**/opendistro/
 repository_bumper_*.log
+playbooks/indexer/wazuh-certificates/
